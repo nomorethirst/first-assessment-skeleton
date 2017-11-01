@@ -19,10 +19,13 @@ public class ClientHandler implements Runnable {
 	private Logger log = LoggerFactory.getLogger(ClientHandler.class);
 
 	private Socket socket;
+	private Dispatcher dispatcher;
+	private String username;
 
-	public ClientHandler(Socket socket) {
+	public ClientHandler(Socket socket, Dispatcher dispatcher) {
 		super();
 		this.socket = socket;
+		this.dispatcher = dispatcher;
 	}
 
 	public void run() {
@@ -33,25 +36,34 @@ public class ClientHandler implements Runnable {
 			PrintWriter writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
 
 			while (!socket.isClosed()) {
+				// Process messages from client
 				String raw = reader.readLine();
-				Message message = mapper.readValue(raw, Message.class);
-				message.setTimestamp(LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
+				Message msg = mapper.readValue(raw, Message.class);
+				msg.setTimestamp(LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
 
-				switch (message.getCommand()) {
+				switch (msg.getCommand()) {
 					case "connect":
-						log.info("user <{}> connected", message.getUsername());
+						log.info("user <{}> connected", msg.getUsername());
+						this.username = msg.getUsername();
+						dispatcher.connect(msg);
 						break;
 					case "disconnect":
-						log.info("user <{}> disconnected", message.getUsername());
+						log.info("user <{}> disconnected", msg.getUsername());
+						this.username = null;
+						dispatcher.disconnect(msg);
 						this.socket.close();
 						break;
 					case "echo":
-						log.info("user <{}> echoed message <{}>", message.getUsername(), message.getContents());
-						String response = mapper.writeValueAsString(message);
+						log.info("user <{}> echoed message <{}>", msg.getUsername(), msg.getContents());
+						String response = mapper.writeValueAsString(msg);
 						writer.write(response);
 						writer.flush();
 						break;
 				}
+
+				// Process messages to client
+				dispatcher.dispatch(this.username, writer);
+				
 			}
 
 		} catch (IOException e) {
