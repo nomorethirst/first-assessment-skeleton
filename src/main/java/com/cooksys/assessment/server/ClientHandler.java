@@ -6,6 +6,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +35,7 @@ public class ClientHandler implements Runnable {
 			while (!socket.isClosed()) {
 				String raw = reader.readLine();
 				Message message = mapper.readValue(raw, Message.class);
+				message.setTimestamp(LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
 
 				switch (message.getCommand()) {
 					case "connect":

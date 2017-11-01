@@ -2,9 +2,18 @@ package com.cooksys.assessment.model;
 
 public class Message {
 
+	private String timestamp;
 	private String username;
 	private String command;
 	private String contents;
+
+	public String getTimestamp() {
+		return timestamp;
+	}
+
+	public void setTimestamp(String timestamp) {
+		this.timestamp = timestamp;
+	}
 
 	public String getUsername() {
 		return username;
