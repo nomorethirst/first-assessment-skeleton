@@ -41,7 +41,7 @@ public class ClientHandler implements Runnable {
 				Message msg = mapper.readValue(raw, Message.class);
 				msg.setTimestamp(LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
 
-				switch (msg.getCommand()) {
+				switch (msg.getCommand().charAt(0) == '@' ? "direct" : msg.getCommand()) {
 					case "connect":
 						log.info("user <{}> connected", msg.getUsername());
 						this.username = msg.getUsername();
@@ -55,14 +55,22 @@ public class ClientHandler implements Runnable {
 						break;
 					case "echo":
 						log.info("user <{}> echoed message <{}>", msg.getUsername(), msg.getContents());
-						String response = mapper.writeValueAsString(msg);
-						writer.write(response);
+						writer.write(mapper.writeValueAsString(msg));
 						writer.flush();
+						break;
+					case "broadcast":
+						log.info("user <{}> broadcasted message <{}>", msg.getUsername(), msg.getContents());
+						dispatcher.broadcast(msg);
+						break;
+					case "direct":
+						log.info("user <{}> sent user <{}> message <{}>", msg.getUsername(), msg.getCommand().substring(1), msg.getContents());
+						dispatcher.broadcast(msg);
 						break;
 				}
 
-				// Process messages to client
-				dispatcher.dispatch(this.username, writer);
+				// Process messages to client if connected
+				if (this.username != null)
+					dispatcher.dispatch(this.username, writer, mapper);
 				
 			}
 

@@ -9,12 +9,13 @@ let username
 let server
 let host
 let port
+let command_state
 
 cli
   .delimiter(cli.chalk['yellow']('ftd~$'))
 
 cli
-  .mode('connect <username> [host] [port]')
+  .mode('connect <username> [host] [port]', 'Connect to server.')
   .delimiter(cli.chalk['green']('connected>'))
   .init(function (args, callback) {
     username = args.username
@@ -26,7 +27,11 @@ cli
     })
 
     server.on('data', (buffer) => {
-      this.log(Message.fromJSON(buffer).toString())
+      const jsonArray = `[${buffer.toString().split('}{').join('},{').split(',')}]`
+      const objArray = JSON.parse(jsonArray)
+      for (let o of objArray) {
+        this.log(new Message(o).toString())
+      }
     })
 
     server.on('error', (error) => {
@@ -42,13 +47,17 @@ cli
     })
   })
   .action(function (input, callback) {
-    const [ command, ...rest ] = words(input)
-    const contents = rest.join(' ')
+    const inputArray = input.split(' ')
+    const command = inputArray.splice(0,1)[0]
+    const contents = inputArray.join(' ')
 
     if (command === 'disconnect') {
       server.end(new Message({ username, command }).toJSON() + '\n')
-    } else if (command === 'echo') {
+    } else if (command === 'echo' || command === 'broadcast' || command[0] === '@') {
+      command_state = command
       server.write(new Message({ username, command, contents }).toJSON() + '\n')
+    } else if (command_state !== null) {
+      server.write(new Message({ username, command: command_state, contents: command + ' ' + contents }).toJSON() + '\n')
     } else {
       this.log(`Command <${command}> was not recognized`)
     }

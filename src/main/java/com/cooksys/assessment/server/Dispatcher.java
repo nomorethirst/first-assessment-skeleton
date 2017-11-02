@@ -11,12 +11,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class Dispatcher {
 	
 	private Map<String, ConcurrentLinkedQueue<Message>> outBoxes;
-	private ObjectMapper mapper;
 			
 	public Dispatcher() {
 		this.outBoxes = new ConcurrentHashMap<String, ConcurrentLinkedQueue<Message>>();
-		this.mapper = new ObjectMapper();
-
 	}
 
 	public void broadcast(Message msg) {
@@ -34,8 +31,12 @@ public class Dispatcher {
 		outBoxes.remove(msg.getUsername());
 		broadcast(msg);
 	}
+	
+	public void directMessage(Message msg) {
+		outBoxes.get(msg.getCommand().substring(1)).add(msg);
+	}
 
-	public void dispatch(String username, PrintWriter writer) throws JsonProcessingException {
+	public void dispatch(String username, PrintWriter writer, ObjectMapper mapper) throws JsonProcessingException {
 		ConcurrentLinkedQueue<Message> outBox = outBoxes.get(username);
 		Message msg;
 		while (!outBox.isEmpty()) {
