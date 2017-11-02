@@ -1,5 +1,4 @@
 import vorpal from 'vorpal'
-import { words } from 'lodash'
 import { connect } from 'net'
 import { Message } from './Message'
 
@@ -41,16 +40,18 @@ function welcome() {
 }
 welcome()
 
+// prompt
 cli
   .delimiter(cli.chalk['yellow']('ftd~$'))
 
+// connect mode
 cli
   .mode('connect <username> [host] [port]', 'Connect to server.')
   .delimiter(cli.chalk['green']('connected>'))
   .init(function (args, callback) {
     username = args.username
-    host = args.host ? args.host : '127.0.0.1'
-    port = args.port ? args.port : 8084
+    host = args.host ? args.host : 'localhost'
+    port = args.port ? args.port : 8080
     server = connect({ host, port }, () => {
       server.write(new Message({ username, command: 'connect' }).toJSON() + '\n')
       callback()
@@ -100,6 +101,7 @@ cli
     callback()
   })
 
+// util function for chalking output of different command types
 function command2color(command) {
   switch (command[0] === '@' ? 'direct' : command) {
     case 'connect':
