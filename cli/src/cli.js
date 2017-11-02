@@ -45,6 +45,16 @@ cli
   .delimiter(cli.chalk['yellow']('ftd~$'))
 
 // connect mode
+const connect_desc = `Available commands are:
+   echo [message]         Send message and server echoes back.
+   broadcast [message]    Send message to all connected users.
+   users                  Retrieve list of all connected users.
+   @username [message]    Send direct message to <username>.
+   disconnect             Disconnect from server.
+After issuing <echo>, <broadcast>, and <@username> commands, the
+command is remembered (until another command is entered) and you
+only have to type the message each time afterwards.`
+
 cli
   .mode('connect <username> [host] [port]', 'Connect to server.')
   .delimiter(cli.chalk['green']('connected>'))
@@ -56,6 +66,7 @@ cli
       server.write(new Message({ username, command: 'connect' }).toJSON() + '\n')
       callback()
     })
+    cli.log(cli.chalk['yellow'](`You are now connecting to the server...\n${connect_desc}`))
 
     server.on('data', (buffer) => {
       // buffer may contain multiple message jsons, so split them and process each
@@ -85,20 +96,24 @@ cli
   .action(function (input, callback) {
     const inputArray = input.split(' ')
     const command = inputArray.splice(0,1)[0]
-    const contents = inputArray.join(' ')
-    //this.log(`contents: "${contents}", command: "${command}"`)
+    let contents = inputArray.join(' ')
+    // this.log(`contents: "${contents}", command: "${command}", username: "${username}"`)
+
 
     if (command === 'disconnect') {
+      command_state = null
       server.end(new Message({ username, command }).toJSON() + '\n')
-    } else if (command === 'echo' || command === 'broadcast' || command[0] === '@' || command === 'users') {
+    } else if (command === 'echo' || command === 'broadcast' || command[0] === '@') {
       command_state = command
       server.write(new Message({ username, command, contents }).toJSON() + '\n')
+    } else if (command === 'users') {
+      command_state = null
+      server.write(new Message({ username, command, contents }).toJSON() + '\n')
     } else if (command_state !== null) {
-      server.write(new Message({ username, command: command_state, contents: command + ' ' + contents }).toJSON() + '\n')
+      contents = contents === "" ? command : command + ' ' + contents
+      server.write(new Message({ username, command: command_state, contents }).toJSON() + '\n')
     } else {
-      this.log(
-`Command <${command}> was not recognized.
- Available commands are <echo>, <broadcast>, <users>, and <@username>.`)
+      this.log(cli.chalk['red'](`Command <${command}> was not recognized.\n${connect_desc}`))
     }
 
     callback()
@@ -109,15 +124,15 @@ function command2color(command) {
   switch (command[0] === '@' ? 'direct' : command) {
     case 'connect':
     case 'disconnect':
-      return 'magenta'
+      return 'green'
     case 'echo':
       return 'blue'
     case 'broadcast':
-      return 'green'
+      return 'magenta'
     case 'direct':
       return 'cyan'
     case 'users':
-      return 'yellow'
+      return 'green'
     default:
       return 'white'
   }
