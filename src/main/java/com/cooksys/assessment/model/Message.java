@@ -1,5 +1,12 @@
 package com.cooksys.assessment.model;
 
+/**
+ * Main data model for chat server.  Message objects are the units of
+ * communication between this chat server and its clients.
+ * 
+ * @author Danny Smith
+ *
+ */
 public class Message {
 
 	private String timestamp;
@@ -45,5 +52,4 @@ public class Message {
 				+ contents + "]";
 	}
 	
-
 }
