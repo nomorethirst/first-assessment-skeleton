@@ -42,7 +42,7 @@ public class Dispatcher {
 	public void dispatch(String username, PrintWriter writer, ObjectMapper mapper) throws JsonProcessingException {
 		ConcurrentLinkedQueue<Message> outBox = outBoxes.get(username);
 		Message msg;
-		while (!outBox.isEmpty()) {
+		while (outBox != null && !outBox.isEmpty()) {
 			msg = outBox.remove();
 			writer.write(mapper.writeValueAsString(msg));
 			writer.flush();

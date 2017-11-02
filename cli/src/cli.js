@@ -58,6 +58,7 @@ cli
     })
 
     server.on('data', (buffer) => {
+      // buffer may contain multiple message jsons, so split them and process each
       const jsonArray = `[${buffer.toString().split('}{').join('},{').split(',')}]`
       const objArray = JSON.parse(jsonArray)
       for (let o of objArray) {
@@ -95,7 +96,9 @@ cli
     } else if (command_state !== null) {
       server.write(new Message({ username, command: command_state, contents: command + ' ' + contents }).toJSON() + '\n')
     } else {
-      this.log(`Command <${command}> was not recognized`)
+      this.log(
+`Command <${command}> was not recognized.
+ Available commands are <echo>, <broadcast>, <users>, and <@username>.`)
     }
 
     callback()
