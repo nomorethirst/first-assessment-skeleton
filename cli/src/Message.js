@@ -22,15 +22,17 @@ export class Message {
   toString () {
     switch (this.command[0] === '@' ? 'direct' : this.command) {
       case 'connect':
-        return `${this.timestamp} <${this.username}> has connected`
+        return `${this.timestamp}: <${this.username}> has connected`
       case 'disconnect':
-        return `${this.timestamp} <${this.username}> has disconnected`
+        return `${this.timestamp}: <${this.username}> has disconnected`
       case 'echo':
         return `${this.timestamp} <${this.username}> (echo): ${this.contents}`
       case 'broadcast':
         return `${this.timestamp} <${this.username}> (all): ${this.contents}`
       case 'direct':
         return `${this.timestamp} <${this.username}> (whisper): ${this.contents}`
+      case 'users':
+        return `${this.timestamp}: currently connected users:\n${this.contents.slice(1,-1).split(/, */).join('\n')}\n<${this.username}>`
       default:
         return `Error: Invalid command in Message object.`
     }

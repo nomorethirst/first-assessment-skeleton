@@ -64,18 +64,34 @@ public class ClientHandler implements Runnable {
 						break;
 					case "direct":
 						log.info("user <{}> sent user <{}> message <{}>", msg.getUsername(), msg.getCommand().substring(1), msg.getContents());
-						dispatcher.broadcast(msg);
+						dispatcher.directMessage(msg);
+						break;
+					case "users":
+						log.info("user <{}> requested user list", msg.getUsername());
+						msg.setContents(dispatcher.getCurrentUsers().toString());
+						writer.write(mapper.writeValueAsString(msg));
+						writer.flush();
 						break;
 				}
-
 				// Process messages to client if connected
 				if (this.username != null)
 					dispatcher.dispatch(this.username, writer, mapper);
-				
 			}
 
 		} catch (IOException e) {
 			log.error("Something went wrong :/", e);
+		} catch (NullPointerException e) {
+			log.info("user <{}> closed connection.", this.username);
+			Message msg = new Message();
+			msg.setUsername(this.username);
+			dispatcher.disconnect(msg);
+		} finally {
+			try {
+				socket.close();
+			} catch (IOException e) {
+				log.error("Error closing socket for user <{}>.", this.username);
+				e.printStackTrace();
+			}
 		}
 	}
 

@@ -9,7 +9,7 @@ let username
 let server
 let host
 let port
-let command_state
+let command_state = null
 
 cli
   .delimiter(cli.chalk['yellow']('ftd~$'))
@@ -19,8 +19,8 @@ cli
   .delimiter(cli.chalk['green']('connected>'))
   .init(function (args, callback) {
     username = args.username
-    host = args.host ? args.host : 'localhost'
-    port = args.port ? args.port : 8080
+    host = args.host ? args.host : '127.0.0.1'
+    port = args.port ? args.port : 8084
     server = connect({ host, port }, () => {
       server.write(new Message({ username, command: 'connect' }).toJSON() + '\n')
       callback()
@@ -30,6 +30,7 @@ cli
       const jsonArray = `[${buffer.toString().split('}{').join('},{').split(',')}]`
       const objArray = JSON.parse(jsonArray)
       for (let o of objArray) {
+        //console.log(o)
         this.log(new Message(o).toString())
       }
     })
@@ -50,10 +51,11 @@ cli
     const inputArray = input.split(' ')
     const command = inputArray.splice(0,1)[0]
     const contents = inputArray.join(' ')
+    //console.log(`contents: "${contents}", command: "${command}"`)
 
     if (command === 'disconnect') {
       server.end(new Message({ username, command }).toJSON() + '\n')
-    } else if (command === 'echo' || command === 'broadcast' || command[0] === '@') {
+    } else if (command === 'echo' || command === 'broadcast' || command[0] === '@' || command === 'users') {
       command_state = command
       server.write(new Message({ username, command, contents }).toJSON() + '\n')
     } else if (command_state !== null) {

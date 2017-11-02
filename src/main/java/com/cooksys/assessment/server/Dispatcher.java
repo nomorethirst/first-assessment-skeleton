@@ -2,6 +2,7 @@ package com.cooksys.assessment.server;
 
 import java.io.PrintWriter;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import com.cooksys.assessment.model.Message;
@@ -29,11 +30,13 @@ public class Dispatcher {
 	
 	public void disconnect(Message msg) {
 		outBoxes.remove(msg.getUsername());
-		broadcast(msg);
+		if (msg.getCommand() != null)
+			broadcast(msg);
 	}
 	
 	public void directMessage(Message msg) {
 		outBoxes.get(msg.getCommand().substring(1)).add(msg);
+		outBoxes.get(msg.getUsername()).add(msg);
 	}
 
 	public void dispatch(String username, PrintWriter writer, ObjectMapper mapper) throws JsonProcessingException {
@@ -44,6 +47,10 @@ public class Dispatcher {
 			writer.write(mapper.writeValueAsString(msg));
 			writer.flush();
 		}
+	}
+	
+	public Set<String> getCurrentUsers() {
+		return outBoxes.keySet();
 	}
 
 }

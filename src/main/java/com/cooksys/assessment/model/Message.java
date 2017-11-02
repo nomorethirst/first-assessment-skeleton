@@ -39,4 +39,11 @@ public class Message {
 		this.contents = contents;
 	}
 
+	@Override
+	public String toString() {
+		return "Message [timestamp=" + timestamp + ", username=" + username + ", command=" + command + ", contents="
+				+ contents + "]";
+	}
+	
+
 }
