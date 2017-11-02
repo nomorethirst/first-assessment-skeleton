@@ -64,7 +64,7 @@ cli
         let msg = new Message(o)
         if (msg.contents === 'invalid user')
           command_state = null
-        this.log(new Message(o).toString())
+        this.log(cli.chalk[command2color(msg.command)](msg.toString()))
       }
     })
 
@@ -99,3 +99,21 @@ cli
 
     callback()
   })
+
+function command2color(command) {
+  switch (command[0] === '@' ? 'direct' : command) {
+    case 'connect':
+    case 'disconnect':
+      return 'magenta'
+    case 'echo':
+      return 'blue'
+    case 'broadcast':
+      return 'green'
+    case 'direct':
+      return 'cyan'
+    case 'users':
+      return 'yellow'
+    default:
+      return 'white'
+  }
+}
