@@ -11,6 +11,54 @@ let host
 let port
 let command_state = null
 
+let i = 0, count = 0, frame = 0
+const frames = ['-', '\\', '|', '/']
+
+function welcome() {
+    cli.ui.redraw(cli.chalk['yellow'](
+`
+                ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆
+                ${frame}  Welcome to FastChat'D! ${frame}
+                ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆
+`
+    ))
+    if (count < 15) {
+      frame = frames[i = ++count % frames.length];
+      setTimeout( () => {
+        welcome()
+      }, 50)
+    } else {
+      cli.ui.redraw(cli.chalk['yellow'](
+`
+                ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆
+                ${frame}  Welcome to FastChat'D! ${frame}
+                ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆
+            Type 'help' to see available commands.
+`
+    ))
+      cli.ui.redraw.done()
+    }
+}
+welcome()
+//cli.exec('help')
+
+// setInterval(() => {
+//   while (count < 2000) {
+//     const frame = frames[i = ++count % frames.length];
+
+//     cli.ui.redraw(cli.chalk['yellow'](
+// `
+//                 ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆
+//                 ${frame}  Welcome to FastChat'D! ${frame}
+//                 ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆
+
+// `
+//     ))
+//   }
+//   cli.ui.redraw.done()
+// }, 80)
+
+
 cli
   .delimiter(cli.chalk['yellow']('ftd~$'))
 
