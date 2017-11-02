@@ -30,7 +30,10 @@ export class Message {
       case 'broadcast':
         return `${this.timestamp} <${this.username}> (all): ${this.contents}`
       case 'direct':
-        return `${this.timestamp} <${this.username}> (whisper): ${this.contents}`
+        if (this.contents !== "invalid user")
+          return `${this.timestamp} <${this.username}> (whisper): ${this.contents}`
+        else
+          return `${this.timestamp} <${this.command.slice(1)}> is not connected.`
       case 'users':
         return `${this.timestamp}: currently connected users:\n${this.contents.slice(1,-1).split(/, */).join('\n')}\n<${this.username}>`
       default:

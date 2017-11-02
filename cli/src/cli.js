@@ -60,7 +60,10 @@ cli
       const jsonArray = `[${buffer.toString().split('}{').join('},{').split(',')}]`
       const objArray = JSON.parse(jsonArray)
       for (let o of objArray) {
-        //console.log(o)
+        //this.log(o)
+        let msg = new Message(o)
+        if (msg.contents === 'invalid user')
+          command_state = null
         this.log(new Message(o).toString())
       }
     })
@@ -81,7 +84,7 @@ cli
     const inputArray = input.split(' ')
     const command = inputArray.splice(0,1)[0]
     const contents = inputArray.join(' ')
-    //console.log(`contents: "${contents}", command: "${command}"`)
+    //this.log(`contents: "${contents}", command: "${command}"`)
 
     if (command === 'disconnect') {
       server.end(new Message({ username, command }).toJSON() + '\n')

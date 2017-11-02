@@ -37,43 +37,53 @@ public class ClientHandler implements Runnable {
 
 			while (!socket.isClosed()) {
 				// Process messages from client
-				String raw = reader.readLine();
-				Message msg = mapper.readValue(raw, Message.class);
-				msg.setTimestamp(LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
+				if (reader.ready()) {
+					String raw = reader.readLine();
+					Message msg = mapper.readValue(raw, Message.class);
+					msg.setTimestamp(LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
 
-				switch (msg.getCommand().charAt(0) == '@' ? "direct" : msg.getCommand()) {
-					case "connect":
-						log.info("user <{}> connected", msg.getUsername());
-						this.username = msg.getUsername();
-						dispatcher.connect(msg);
-						break;
-					case "disconnect":
-						log.info("user <{}> disconnected", msg.getUsername());
-						this.username = null;
-						dispatcher.disconnect(msg);
-						this.socket.close();
-						break;
-					case "echo":
-						log.info("user <{}> echoed message <{}>", msg.getUsername(), msg.getContents());
-						writer.write(mapper.writeValueAsString(msg));
-						writer.flush();
-						break;
-					case "broadcast":
-						log.info("user <{}> broadcasted message <{}>", msg.getUsername(), msg.getContents());
-						dispatcher.broadcast(msg);
-						break;
-					case "direct":
-						log.info("user <{}> sent user <{}> message <{}>", msg.getUsername(), msg.getCommand().substring(1), msg.getContents());
-						dispatcher.directMessage(msg);
-						break;
-					case "users":
-						log.info("user <{}> requested user list", msg.getUsername());
-						msg.setContents(dispatcher.getCurrentUsers().toString());
-						writer.write(mapper.writeValueAsString(msg));
-						writer.flush();
-						break;
+					switch (msg.getCommand().charAt(0) == '@' ? "direct" : msg.getCommand()) {
+						case "connect":
+							log.info("user <{}> connected", msg.getUsername());
+							this.username = msg.getUsername();
+							dispatcher.connect(msg);
+							break;
+						case "disconnect":
+							log.info("user <{}> disconnected", msg.getUsername());
+							this.username = null;
+							dispatcher.disconnect(msg);
+							this.socket.close();
+							break;
+						case "echo":
+							log.info("user <{}> echoed message <{}>", msg.getUsername(), msg.getContents());
+							writer.write(mapper.writeValueAsString(msg));
+							writer.flush();
+							break;
+						case "broadcast":
+							log.info("user <{}> broadcasted message <{}>", msg.getUsername(), msg.getContents());
+							dispatcher.broadcast(msg);
+							break;
+						case "direct":
+							log.info("user <{}> sent user <{}> message <{}>", msg.getUsername(), msg.getCommand().substring(1), msg.getContents());
+							if (dispatcher.isConnected(msg.getCommand().substring(1))) {
+								dispatcher.directMessage(msg);
+							} else {
+								msg.setContents("invalid user");
+								writer.write(mapper.writeValueAsString(msg));
+								writer.flush();
+							}
+							break;
+						case "users":
+							log.info("user <{}> requested user list", msg.getUsername());
+							msg.setContents(dispatcher.getCurrentUsers().toString());
+							writer.write(mapper.writeValueAsString(msg));
+							writer.flush();
+							break;
+					}
+					
 				}
 				// Process messages to client if connected
+				Thread.sleep(500);
 				if (this.username != null)
 					dispatcher.dispatch(this.username, writer, mapper);
 			}
@@ -81,10 +91,13 @@ public class ClientHandler implements Runnable {
 		} catch (IOException e) {
 			log.error("Something went wrong :/", e);
 		} catch (NullPointerException e) {
+			e.printStackTrace();
 			log.info("user <{}> closed connection.", this.username);
 			Message msg = new Message();
 			msg.setUsername(this.username);
 			dispatcher.disconnect(msg);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
 		} finally {
 			try {
 				socket.close();

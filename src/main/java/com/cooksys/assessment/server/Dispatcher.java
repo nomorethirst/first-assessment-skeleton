@@ -52,5 +52,9 @@ public class Dispatcher {
 	public Set<String> getCurrentUsers() {
 		return outBoxes.keySet();
 	}
+	
+	public boolean isConnected(String user) {
+		return outBoxes.get(user) != null;
+	}
 
 }
