@@ -35,7 +35,7 @@ export class Message {
         else
           return `${this.timestamp} <${this.command.slice(1)}> is not connected.`
       case 'users':
-        return `${this.timestamp}: currently connected users:\n${this.contents.slice(1,-1).split(/, */).join('\n')}\n<${this.username}>`
+        return `${this.timestamp}: currently connected users:\n${this.contents.slice(1,-1).split(/, */).filter( s => s !== this.username ).join('\n')}\n<${this.username}>`
       default:
         return `Error: Invalid command in Message object.`
     }
