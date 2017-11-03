@@ -8,35 +8,36 @@ let username
 let server
 let host
 let port
-let command_state = null
+let commandState = null
 
 // Animated welcome message
-let i = 0, count = 0, frame = 0
+let count = 0
+let frame = 0
 const frames = ['-', '\\', '|', '/']
-function welcome() {
+const welcome = () => {
+  cli.ui.redraw(cli.chalk['yellow'](
+`
+              ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆
+              ${frame}  Welcome to FastChat'D! ${frame}
+              ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆
+`
+  ))
+  if (count < 15) {
+    frame = frames[++count % frames.length]
+    setTimeout(() => {
+      welcome()
+    }, 50)
+  } else {
     cli.ui.redraw(cli.chalk['yellow'](
 `
-                ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆
-                ${frame}  Welcome to FastChat'D! ${frame}
-                ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆
+              ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆
+              ${frame}  Welcome to FastChat'D! ${frame}
+              ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆
+          Type 'help' to see available commands.
 `
-    ))
-    if (count < 15) {
-      frame = frames[i = ++count % frames.length];
-      setTimeout( () => {
-        welcome()
-      }, 50)
-    } else {
-      cli.ui.redraw(cli.chalk['yellow'](
-`
-                ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆
-                ${frame}  Welcome to FastChat'D! ${frame}
-                ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆ ☆
-            Type 'help' to see available commands.
-`
-    ))
-      cli.ui.redraw.done()
-    }
+  ))
+    cli.ui.redraw.done()
+  }
 }
 welcome()
 
@@ -45,7 +46,7 @@ cli
   .delimiter(cli.chalk['yellow']('ftd~$'))
 
 // connect mode
-const connect_desc = `Available commands are:
+const connectDesc = `Available commands are:
    echo [message]         Send message and server echoes back.
    broadcast [message]    Send message to all connected users.
    users                  Retrieve list of all connected users.
@@ -58,7 +59,7 @@ only have to type the message each time afterwards.`
 cli
   .mode('connect <username> [host] [port]', 'Connect to server.')
   .delimiter(cli.chalk['green']('connected>'))
-  .init(function (args, callback) {
+  .init((args, callback) => {
     username = args.username
     host = args.host ? args.host : 'localhost'
     port = args.port ? args.port : 8080
@@ -66,17 +67,18 @@ cli
       server.write(new Message({ username, command: 'connect' }).toJSON() + '\n')
       callback()
     })
-    cli.log(cli.chalk['yellow'](`You are now connecting to the server...\n${connect_desc}`))
+    cli.log(cli.chalk['yellow'](`You are now connecting to the server...\n${connectDesc}`))
 
     server.on('data', (buffer) => {
       // buffer may contain multiple message jsons, so split them and process each
       const jsonArray = `[${buffer.toString().split('}{').join('},{').split(',')}]`
       const objArray = JSON.parse(jsonArray)
       for (let o of objArray) {
-        //this.log(o)
+        // this.log(o)
         let msg = new Message(o)
-        if (msg.contents === 'invalid user')
-          command_state = null
+        if (msg.contents === 'invalid user') {
+          commandState = null
+        }
         this.log(cli.chalk[command2color(msg.command)](msg.toString()))
       }
     })
@@ -93,34 +95,33 @@ cli
       cli.exec('exit')
     })
   })
-  .action(function (input, callback) {
+  .action((input, callback) => {
     const inputArray = input.split(' ')
-    const command = inputArray.splice(0,1)[0]
+    const command = inputArray.splice(0, 1)[0]
     let contents = inputArray.join(' ')
     // this.log(`contents: "${contents}", command: "${command}", username: "${username}"`)
 
-
     if (command === 'disconnect') {
-      command_state = null
+      commandState = null
       server.end(new Message({ username, command }).toJSON() + '\n')
     } else if (command === 'echo' || command === 'broadcast' || command[0] === '@') {
-      command_state = command
+      commandState = command
       server.write(new Message({ username, command, contents }).toJSON() + '\n')
     } else if (command === 'users') {
-      command_state = null
+      commandState = null
       server.write(new Message({ username, command, contents }).toJSON() + '\n')
-    } else if (command_state !== null) {
-      contents = contents === "" ? command : command + ' ' + contents
-      server.write(new Message({ username, command: command_state, contents }).toJSON() + '\n')
+    } else if (commandState !== null) {
+      contents = contents === '' ? command : command + ' ' + contents
+      server.write(new Message({ username, command: commandState, contents }).toJSON() + '\n')
     } else {
-      this.log(cli.chalk['red'](`Command <${command}> was not recognized.\n${connect_desc}`))
+      this.log(cli.chalk['red'](`Command <${command}> was not recognized.\n${connectDesc}`))
     }
 
     callback()
   })
 
 // util function for chalking output of different command types
-function command2color(command) {
+const command2color = (command) => {
   switch (command[0] === '@' ? 'direct' : command) {
     case 'connect':
     case 'disconnect':
